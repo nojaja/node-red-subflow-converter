@@ -29,6 +29,7 @@ export class GenerateLib {
         const fullpath = path.join(process.cwd(), flowpath)
         const flowContents = fs.readFileSync(fullpath);
         const subflowJSON = JSON.parse(flowContents);
+        const subflowData = new Map()
         const resultData = new Map()
 
         //subflowを探してライブラリ化
@@ -37,16 +38,16 @@ export class GenerateLib {
             if (element.type == "subflow") {
                 const subflows = element
                 const name = element.meta.module || element.name
-
-                resultData[name] = { packageData: {}, subflows: {} }
+                subflowData[name] = { packageData: {}, subflows: {} }
 
                 const packageData = {
                     "name": name,
-                    "version": element.meta.version || "0.0.1",
-                    "description": element.meta.desc || element.info || "",
-                    "author": element.meta.author || "",
-                    "license": element.meta.license || "",
-                    "keywords": element.meta.keywords || "",
+                    "version": subflows.meta.version || "0.0.1",
+                    "description": subflows.meta.desc || subflows.info || "",
+                    "main": "index.js",
+                    "author": subflows.meta.author || "",
+                    "license": subflows.meta.license || "",
+                    "keywords": subflows.meta.keywords || "",
                     "node-red": {
                         "nodes": {}
                     },
@@ -59,20 +60,32 @@ export class GenerateLib {
                 subflows.flow = []
                 for (const flow of subflowJSON) {
                     if (flow.type == `subflow:${subflows.id}`) {//flow.typeがsubflowsのIDと同じ場合は、そのsubflowsを使っている
-                        flow.type = name
-                        if (flow.env) {
-                            for (const env of flow.env) {
-                                flow[env.name] = (env.type) ? { "type": env.type, "value": env.value || "" } : env.value || ""
-                            }
-                            delete flow.env
+                        flow.type = subflows.meta.type
+
+                        for (const env of subflows.env) {
+                            const _env = (flow.env && flow.env[env.name] )?flow.env[env.name]:{type:null,value:null}
+                            flow[env.name] = { "type": _env.type || env.type, "value": _env.value || env.value || "" }
+                            //flow[env.name] = (env.type && env.type!="str") ? { "type": env.type, "value": env.value || "" } : env.value || ""
+                            //flow[env.name] = { "type": env.type, "value": env.value || "" } 
                         }
+                        delete flow.env
+
+                        // if (flow.env) {
+                        //     for (const env of flow.env) {
+                        //         //flow[env.name] = (env.type && env.type!="str") ? { "type": env.type, "value": env.value || "" } : env.value || ""
+                        //         //flow[env.name] = { "type": env.type, "value": env.value || "" } 
+                        //         flow[env.name] = { "type": env.type, "value": env.value || "" }
+                        //     }
+                        //     delete flow.env
+                        // }
+
                     }
                     if (flow.z == subflows.id) {//flow.zがsubflowsのIDと同じ場合は、そのsubflowsに属している
                         subflows.flow.push(flow)
                     }
                 }
-                resultData[name].package = packageData
-                resultData[name].subflows = subflows
+                subflowData[name].package = packageData
+                subflowData[name].subflows = subflows
                 //subflows
                 //      "id": "cd185f8f533e0f2d",
                 //      "type": "subflow",
@@ -81,56 +94,58 @@ export class GenerateLib {
         }
         const subflowsid = {}
         //dependencies追加
-        for (const key in resultData) {
-            const subflows = resultData[key];
+        for (const key in subflowData) {
+            const subflows = subflowData[key];
             subflowsid[subflows.subflows.id] = subflows //フローから削除するためのキー登録
             for (const flow of subflows.subflows.flow) {
-                if (resultData[flow.type]) {
+                if (subflowData[flow.type]) {
                     //フロー内で別のサブフローを使っていたら、dependenciesにそのサブフローを追加する
-                    subflows.package.dependencies[flow.type] = resultData[flow.type].package.version
+                    subflows.package.dependencies[flow.type] = subflowData[flow.type].package.version
                 }
             }
         }
-        
+
+        resultData["subflowData"] = subflowData
+
         const flowJSON = JSON.parse(JSON.stringify(subflowJSON))
         //subflowに属してないflowのみにする
-        resultData.flow = flowJSON.filter(element => !(subflowsid[element.z] || element.type == "subflow"));
+        resultData["flowData"] = flowJSON.filter(element => !(subflowsid[element.z] || element.type == "subflow"));
         //console.log(result)
         return resultData
     }
 
     generate(resultData) {
 
+        const subflowData = resultData["subflowData"]
+        const flowData = resultData["flowData"]
         //subフローを削除したflows.jsonを出力
-        fs.writeFileSync(path.join(process.cwd(), "output", "flows.json"), JSON.stringify(resultData.flow, null, '    '));
-
-        for (const key in resultData) {
-            const subflows = resultData[key];
-            const outputdir = path.join(process.cwd(), "output",key)
-            if(!fs.existsSync(outputdir)){
-                fs.mkdirSync(outputdir,{ recursive: true });
-            }
-            
-            fs.writeFileSync(path.join(outputdir,`${key}.json`), JSON.stringify(subflows.subflows, null, '    '));
-            fs.writeFileSync(path.join(outputdir,'package.json'), JSON.stringify(subflows.package, null, '    '));
+        const outputdir = path.join(process.cwd(), "output")
+        if (!fs.existsSync(outputdir)) {
+            fs.mkdirSync(outputdir, { recursive: true });
         }
-        
-
-        var view = {
-            title: "Joe",
-            calc: function () {
-                return 2 + 4;
+        fs.writeFileSync(path.join(outputdir, 'flows.json'), JSON.stringify(flowData, null, '    '));
+        for (const key in subflowData) {
+            const subflows = subflowData[key];
+            const outputsubflowdir = path.join(process.cwd(), 'output', key, 'subflow')
+            const outputdir = path.join(process.cwd(), 'output', key)
+            if (!fs.existsSync(outputsubflowdir)) {
+                fs.mkdirSync(outputsubflowdir, { recursive: true });
             }
-        };
 
-        //console.log(Handlebars)
-        const template = Handlebars.compile("{{title}} spends {{calc}}");
-        console.log(template(view))
+            fs.writeFileSync(path.join(outputsubflowdir, `${key}.json`), JSON.stringify(subflows.subflows, null, '    '))
+            fs.writeFileSync(path.join(outputdir, 'package.json'), JSON.stringify(subflows.package, null, '    '))
+            const index_js = fs.readFileSync(path.join(process.cwd(), 'template', 'index.js'), 'utf-8')
+            fs.writeFileSync(path.join(outputdir, 'index.js'), index_js)
 
-        const templatedir = path.join(process.cwd(), "template")
-        this.dirwalk(templatedir, (basepath, currentpath, file) => {
-            console.log("dirwalk:", basepath, currentpath, file)
-        })
+            const README_md = fs.readFileSync(path.join(process.cwd(), 'template', 'README.md'), 'utf-8')
+            const template = Handlebars.compile(README_md)
+            fs.writeFileSync(path.join(outputdir, 'README.md'), template(subflows.package))
+        }
+
+        //const templatedir = path.join(process.cwd(), "template")
+        //this.dirwalk(templatedir, (basepath, currentpath, file) => {
+        //    console.log("dirwalk:", basepath, currentpath, file)
+        //})
     }
 
 }

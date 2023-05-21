@@ -11,20 +11,9 @@ module.exports = function (RED) {
             const filepath = path.join(subflowpath,file)
             if(fs.statSync(filepath).isFile() && /\.json$/.test(filepath)) {
                 const subflowContents = fs.readFileSync(filepath);
-                const subflowJSON = JSON.parse(subflowContents);
-                for (const element of subflowJSON) {
-                    //subflowを探す
-                    if(element.type=="subflow"){
-                        const subflows = element
-                        subflows.flow = []
-                        for (const flow of subflowJSON) {
-                            if(flow.z==subflows.id){//flow.zがsubflowsのIDと同じ場合は、そのsubflowsに属している
-                                subflows.flow.push(flow)
-                            }
-                        }
-                        RED.nodes.registerSubflow(subflows);
-                    }
-                } 
+                const subflows = JSON.parse(subflowContents);
+                RED.nodes.registerSubflow(subflows);
+                RED.log.info(`registerSubflow:${subflows.name}`)
             }
         }
     });

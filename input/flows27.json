@@ -59,7 +59,7 @@
             }
         ],
         "meta": {
-            "module": "node-red-logger",
+            "module": "node-red-job-logger",
             "type": "logger",
             "version": "0.0.1",
             "license": "MIT"
@@ -102,7 +102,7 @@
             }
         ],
         "meta": {
-            "module": "node-red-endpoint",
+            "module": "node-red-job-endpoint",
             "type": "endpoint",
             "version": "0.0.1",
             "license": "MIT"
@@ -113,7 +113,7 @@
     {
         "id": "45018afdb676ae24",
         "type": "subflow",
-        "name": "rpc_async",
+        "name": "rpc-async",
         "info": "",
         "category": "",
         "in": [
@@ -148,7 +148,10 @@
             {
                 "name": "endpoint",
                 "type": "env",
-                "value": "/callback/${jobgroup}/jobsession/"
+                "value": "/callback/${jobgroup}/jobsession/",
+                "ui": {
+                    "type": "hide"
+                }
             },
             {
                 "name": "jobsession_key",
@@ -166,14 +169,19 @@
                 "value": "test"
             }
         ],
-        "meta": {},
+        "meta": {
+            "module": "node-red-job-rpc-async",
+            "type": "rpc-async",
+            "version": "0.0.1",
+            "license": "MIT"
+        },
         "color": "#A6BBCF",
         "icon": "node-red/arrow-in.svg"
     },
     {
         "id": "0cd70b49340abfe2",
         "type": "subflow",
-        "name": "cluster_endpoint",
+        "name": "cluster-endpoint",
         "info": "",
         "category": "",
         "in": [],
@@ -197,8 +205,10 @@
             }
         ],
         "meta": {
-            "module": "cluster-endpoint",
-            "type": "cluster-endpoint"
+            "module": "node-red-job-cluster-endpoint",
+            "type": "cluster-endpoint",
+            "version": "0.0.1",
+            "license": "MIT"
         },
         "color": "#A6BBCF",
         "icon": "node-red/bridge.svg"
@@ -234,8 +244,10 @@
             }
         ],
         "meta": {
-            "module": "cluster-ctl",
-            "type": "cluster-ctl"
+            "module": "node-red-job-cluster-ctl",
+            "type": "cluster-ctl",
+            "version": "0.0.1",
+            "license": "MIT"
         },
         "color": "#A6BBCF",
         "icon": "node-red/bridge-dash.svg"
@@ -281,8 +293,10 @@
         ],
         "env": [],
         "meta": {
-            "module": "switch-role",
-            "type": "switch-role"
+            "module": "node-red-job-switch-role",
+            "type": "switch-role",
+            "version": "0.0.1",
+            "license": "MIT"
         },
         "color": "#E2D96E",
         "outputLabels": [
@@ -342,7 +356,12 @@
                 "value": "topic"
             }
         ],
-        "meta": {},
+        "meta": {
+            "module": "node-red-job-rpc-sync",
+            "type": "rpc-sync",
+            "version": "0.0.1",
+            "license": "MIT"
+        },
         "color": "#A6BBCF",
         "icon": "node-red/arrow-in.svg"
     },
@@ -398,8 +417,10 @@
             }
         ],
         "meta": {
-            "module": "topics-assign",
-            "type": "topics-assign"
+            "module": "node-red-job-topics-assign",
+            "type": "topics-assign",
+            "version": "0.0.1",
+            "license": "MIT"
         },
         "color": "#DEB887",
         "icon": "node-red/db.svg"
@@ -451,8 +472,10 @@
             }
         ],
         "meta": {
-            "module": "fillter-topic",
-            "type": "fillter-topic"
+            "module": "node-red-job-fillter-topic",
+            "type": "fillter-topic",
+            "version": "0.0.1",
+            "license": "MIT"
         },
         "color": "#E2D96E",
         "icon": "node-red/rbe.png"
@@ -494,8 +517,10 @@
             }
         ],
         "meta": {
-            "module": "topic-add",
-            "type": "topic-add"
+            "module": "node-red-job-topic-add",
+            "type": "topic-add",
+            "version": "0.0.1",
+            "license": "MIT"
         },
         "color": "#DEB887",
         "icon": "node-red/db.svg"
@@ -537,8 +562,10 @@
             }
         ],
         "meta": {
-            "module": "topics-list",
-            "type": "topics-list"
+            "module": "node-red-job-topics-list",
+            "type": "topics-list",
+            "version": "0.0.1",
+            "license": "MIT"
         },
         "color": "#DEB887",
         "icon": "node-red/db.svg"
@@ -600,8 +627,10 @@
             }
         ],
         "meta": {
-            "module": "topics-update",
-            "type": "topics-update"
+            "module": "node-red-job-topics-update",
+            "type": "topics-update",
+            "version": "0.0.1",
+            "license": "MIT"
         },
         "color": "#DEB887",
         "icon": "node-red/db.svg"
