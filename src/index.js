@@ -61,12 +61,14 @@ export class GenerateLib {
                 for (const flow of subflowJSON) {
                     if (flow.type == `subflow:${subflows.id}`) {//flow.typeがsubflowsのIDと同じ場合は、そのsubflowsを使っている
                         flow.type = subflows.meta.type
-
-                        for (const env of subflows.env) {
-                            const _env = (flow.env && flow.env[env.name] )?flow.env[env.name]:{type:null,value:null}
-                            flow[env.name] = { "type": _env.type || env.type, "value": _env.value || env.value || "" }
-                            //flow[env.name] = (env.type && env.type!="str") ? { "type": env.type, "value": env.value || "" } : env.value || ""
-                            //flow[env.name] = { "type": env.type, "value": env.value || "" } 
+                        const _flowenv = {}
+                        for (const env of flow.env || []) {
+                            _flowenv[env.name] = { "type": env.type, "value": env.value} 
+                        }
+                        for (const prototype_env of subflows.env) {
+                            const _env = _flowenv[prototype_env.name] || {type:null,value:null}
+                            flow[prototype_env.name] = { "type": _env.type || prototype_env.type, "value": _env.value || prototype_env.value || "" }
+                            //console.log("env: instance:",_env," prototype:",prototype_env)
                         }
                         delete flow.env
 
