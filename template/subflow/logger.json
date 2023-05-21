@@ -1,0 +1,105 @@
+[
+    {
+        "id": "cd185f8f533e0f2d",
+        "type": "subflow",
+        "name": "logger",
+        "info": "サイドバーの「デバッグ」タブに、選択したメッセージプロパティの値を表示します。\r\n設定により、ランタイムログへの出力も可能です。\r\nデフォルトの表示対象は`msg.payload`ですが、設定により、指定したプロパティ、メッセージ全体、もしくは、JSONata式の評価結果を出力できます。\r\n\r\n## 詳細\r\n「デバッグ」サイドバーは受け取ったメッセージの階層構造を表示する機能を備えます。この機能によりメッセージの構造を容易に理解できます。\r\n\r\nJavaScriptオブジェクトと配列は必要に応じて折り畳んだり展開したりできます。バッファオブジェクトを生データとして表示したり、表現可能な場合に文字列として表示したりすることも可能です。\r\n\r\nメッセージを受信した時刻、送信ノード、メッセージの型に関する情報を「デバッグ」サイドバーに表示されたメッセージに付随して表示します。送信元ノードのIDを選択すると、ワークスペース内の対応ノードを確認できます。\r\n\r\n出力の有効/無効はノード上のボタンで切り替えられます。フロー上で未使用のdebugノードは、無効化するか削除することを推奨します。\r\n\r\n全てのメッセージをランタイムログに送付、もしくは、(32文字の)短いデータをdebugノードの下のステータステキストに表示することも可能です。",
+        "category": "",
+        "in": [
+            {
+                "x": 50,
+                "y": 30,
+                "wires": [
+                    {
+                        "id": "8b05743651ac39ce"
+                    }
+                ]
+            }
+        ],
+        "out": [],
+        "env": [
+            {
+                "name": "logLevel",
+                "type": "str",
+                "value": "info"
+            },
+            {
+                "name": "logName",
+                "type": "str",
+                "value": "system"
+            },
+            {
+                "name": "logPath",
+                "type": "str",
+                "value": "/workspace/logs/"
+            }
+        ],
+        "meta": {
+            "module": "node-red-logger",
+            "type": "logger",
+            "version": "0.0.1",
+            "license": "MIT"
+        },
+        "color": "#87A980",
+        "icon": "node-red/file-out.svg"
+    },
+    {
+        "id": "8b05743651ac39ce",
+        "type": "function",
+        "z": "cd185f8f533e0f2d",
+        "name": "logger_proc",
+        "func": "//const uid_key = env.get(\"logUID_Key\")\n//const uid = msg[uid_key] || msg._msgid\nconst date = new Date()\nconst uid = date.getFullYear() + (\"0\" + (date.getMonth() + 1)).slice(-2) + (\"0\" + (date.getDate() + 1)).slice(-2)\n\nconst logLevel = env.get(\"logLevel\")\nconst logName = env.get(\"logName\")\nconst logPath = env.get(\"logPath\")\nconst filename = `${logName}${logLevel}.log`\nmsg.logFilePath = path.join(logPath, uid, filename)\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [
+            {
+                "var": "path",
+                "module": "path"
+            }
+        ],
+        "x": 230,
+        "y": 40,
+        "wires": [
+            [
+                "5dfac259ecc0927f",
+                "7e0a41b86051ec87"
+            ]
+        ]
+    },
+    {
+        "id": "5dfac259ecc0927f",
+        "type": "file",
+        "z": "cd185f8f533e0f2d",
+        "name": "logout",
+        "filename": "logFilePath",
+        "filenameType": "msg",
+        "appendNewline": false,
+        "createDir": true,
+        "overwriteFile": "false",
+        "encoding": "none",
+        "x": 410,
+        "y": 40,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7e0a41b86051ec87",
+        "type": "debug",
+        "z": "cd185f8f533e0f2d",
+        "name": "${logName}",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 430,
+        "y": 100,
+        "wires": []
+    }
+]
