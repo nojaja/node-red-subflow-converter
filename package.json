@@ -10,8 +10,9 @@
   "author": "",
   "license": "MIT",
   "devDependencies": {
+    "commander": "^10.0.1",
     "cross-env": "^7.0.3",
-    "mustache": "^4.2.0",
+    "handlebars": "^4.7.7",
     "webpack": "^5.83.1",
     "webpack-cli": "^5.1.1"
   }
