@@ -7,5 +7,10 @@ npm install
 ```
 ### build
 ```
-npm run build; node .\dist\minitool.bundle.js -f input/flows31.json
+npm run build 
+```
+
+### run
+```
+node ./dist/conv.bundle.js -f ../node-red-job-cluster -o ./output
 ```

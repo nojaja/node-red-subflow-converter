@@ -14,7 +14,7 @@ module.exports = {
     main: './index.js',
   },
   output: {
-    filename: 'minitool.bundle.js',
+    filename: 'conv.bundle.js',
     sourceMapFilename: '[name].map',
     path: dist,
     publicPath:"",

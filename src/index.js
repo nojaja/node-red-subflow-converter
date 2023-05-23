@@ -1,9 +1,8 @@
 import Handlebars from 'handlebars'
 import fs from 'fs'
 import path from 'path'
-
-//import { commander } from 'Commander';
-const commander = require('commander');
+//import { commander } from 'commander'
+const commander = require('commander')
 
 export class GenerateLib {
 
@@ -27,8 +26,13 @@ export class GenerateLib {
     }
 
     readflow(flowpath) {
-        const fullpath = path.join(process.cwd(), flowpath)
-        const flowContents = fs.readFileSync(fullpath);
+        const fullpath = path.resolve(flowpath)//path.join(process.cwd(), flowpath)
+        const isProjectpath = fs.statSync(fullpath).isDirectory()
+        const flowPath = (isProjectpath)?path.join(fullpath, 'flows.json'):fullpath
+
+        const dependencies = (isProjectpath)?JSON.parse(fs.readFileSync(path.join(fullpath, 'package.json'))).dependencies:{}
+
+        const flowContents = fs.readFileSync(flowPath);
         const subflowJSON = JSON.parse(flowContents);
         const subflowData = new Map()
         const resultData = new Map()
@@ -53,9 +57,7 @@ export class GenerateLib {
                     "node-red": {
                         "nodes": {}
                     },
-                    "dependencies": {
-                        "node-red-job-util": "0.0.1"
-                    }
+                    "dependencies": dependencies
                 }
                 packageData['node-red'].nodes[name] = "index.js"
 
@@ -113,11 +115,13 @@ export class GenerateLib {
     }
 
     //Output a file based on analysis results
-    generate(resultData) {
+    generate(resultData,outputPath) {
         const subflowData = resultData["subflowData"]
         const flowData = resultData["flowData"]
         //subフローを削除したflows.jsonを出力
-        const outputdir = path.join(process.cwd(), "output")
+        //const outputdir = path.join(process.cwd(), "output")
+        const outputdir = path.resolve(outputPath) || process.cwd()
+
         if (!fs.existsSync(outputdir)) {
             fs.mkdirSync(outputdir, { recursive: true });
         }
@@ -128,8 +132,8 @@ export class GenerateLib {
         //Output for each subflow
         for (const key in subflowData) {
             const subflows = subflowData[key];
-            const outputsubflowdir = path.join(process.cwd(), 'output', key, 'subflow')
-            const outputdir = path.join(process.cwd(), 'output', key)
+            const subflowdir = path.join(outputdir,'node_modules', key)
+            const outputsubflowdir = path.join(subflowdir, 'subflow')
             if (!fs.existsSync(outputsubflowdir)) {
                 fs.mkdirSync(outputsubflowdir, { recursive: true });
             }
@@ -138,16 +142,17 @@ export class GenerateLib {
             fs.writeFileSync(path.join(outputsubflowdir, `${key}.json`), JSON.stringify(subflows.subflows, null, '    '))
             
             // output package.json
-            fs.writeFileSync(path.join(outputdir, 'package.json'), JSON.stringify(subflows.package, null, '    '))
+            fs.writeFileSync(path.join(subflowdir, 'package.json'), JSON.stringify(subflows.package, null, '    '))
 
             // output index.js
-            const index_js = fs.readFileSync(path.join(process.cwd(), 'template', 'index.js'), 'utf-8')
-            fs.writeFileSync(path.join(outputdir, 'index.js'), index_js)
+            
+            const index_js = fs.readFileSync(path.join(__dirname, '../template', 'index.js'), 'utf-8')
+            fs.writeFileSync(path.join(subflowdir, 'index.js'), index_js)
 
             // output README.md
-            const README_md = fs.readFileSync(path.join(process.cwd(), 'template', 'README.md'), 'utf-8')
+            const README_md = fs.readFileSync(path.join(__dirname, '../template', 'README.md'), 'utf-8')
             const template = Handlebars.compile(README_md)
-            fs.writeFileSync(path.join(outputdir, 'README.md'), template(subflows.package))
+            fs.writeFileSync(path.join(subflowdir, 'README.md'), template(subflows.package))
         }
     }
 
@@ -156,15 +161,11 @@ export class GenerateLib {
 
 commander
     .version('0.0.1')
-    .requiredOption('-f, --file <path>', 'flow.json')
+    .requiredOption('-f, --file <path>', 'flow.json or flow project path')
+    .option('-o, --output <path>', 'Output path defaults to the current directory')
     .parse(process.argv);
 
-console.log(commander.opts())
-
 const options = commander.opts();
-
 const gen = new GenerateLib()
-
-
 const resultData = gen.readflow(options.file)
-gen.generate(resultData)
+gen.generate(resultData,options.output)
