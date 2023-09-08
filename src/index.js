@@ -28,9 +28,18 @@ export class GenerateLib {
     readflow(flowpath) {
         const fullpath = path.resolve(flowpath)//path.join(process.cwd(), flowpath)
         const isProjectpath = fs.statSync(fullpath).isDirectory()
-        const flowPath = (isProjectpath)?path.join(fullpath, 'flows.json'):fullpath
 
-        const dependencies = (isProjectpath)?JSON.parse(fs.readFileSync(path.join(fullpath, 'package.json'))).dependencies:{}
+        const packageInfo = (isProjectpath) ? JSON.parse(fs.readFileSync(path.join(fullpath, 'package.json'))) : {
+            dependencies: {}, "node-red": {
+                "settings": {
+                    "flowFile": "flows.json",
+                    "credentialsFile": "flows_cred.json"
+                }
+            }
+        }
+        const dependencies = packageInfo.dependencies
+        const flowFile = packageInfo["node-red"].settings.flowFile
+        const flowPath = (isProjectpath) ? path.join(fullpath, flowFile) : fullpath
 
         const flowContents = fs.readFileSync(flowPath);
         const subflowJSON = JSON.parse(flowContents);
@@ -71,12 +80,12 @@ export class GenerateLib {
                         //インスタンス側の設定値取得
                         const _flowenv = {}
                         for (const env of flow.env || []) {
-                            _flowenv[env.name] = { "type": env.type, "value": env.value} 
+                            _flowenv[env.name] = { "type": env.type, "value": env.value }
                         }
 
                         //Sets the environment variables. If there is no value for an environment variable in the instance, the default value defined in the subflow will be used.
                         for (const prototype_env of subflows.env) {
-                            const _env = _flowenv[prototype_env.name] || {type:null,value:null}
+                            const _env = _flowenv[prototype_env.name] || { type: null, value: null }
                             flow[prototype_env.name] = { "type": _env.type || prototype_env.type, "value": _env.value || prototype_env.value || "" }
                             //console.log("env: instance:",_env," prototype:",prototype_env)
                         }
@@ -110,12 +119,12 @@ export class GenerateLib {
         const flowJSON = JSON.parse(JSON.stringify(subflowJSON))
         //subflowに属してないflowのみにする
         resultData["flowData"] = flowJSON.filter(element => !(subflowsid[element.z] || element.type == "subflow"));
-        
+
         return resultData
     }
 
     //Output a file based on analysis results
-    generate(resultData,outputPath) {
+    generate(resultData, outputPath) {
         const subflowData = resultData["subflowData"]
         const flowData = resultData["flowData"]
         //subフローを削除したflows.jsonを出力
@@ -128,11 +137,11 @@ export class GenerateLib {
 
         //Output flow.json excluding subflow elements
         fs.writeFileSync(path.join(outputdir, 'flows.json'), JSON.stringify(flowData, null, '    '));
-        
+
         //Output for each subflow
         for (const key in subflowData) {
             const subflows = subflowData[key];
-            const subflowdir = path.join(outputdir,'node_modules', key)
+            const subflowdir = path.join(outputdir, 'node_modules', key)
             const outputsubflowdir = path.join(subflowdir, 'subflow')
             if (!fs.existsSync(outputsubflowdir)) {
                 fs.mkdirSync(outputsubflowdir, { recursive: true });
@@ -140,12 +149,12 @@ export class GenerateLib {
 
             // output subflow.json
             fs.writeFileSync(path.join(outputsubflowdir, `${key}.json`), JSON.stringify(subflows.subflows, null, '    '))
-            
+
             // output package.json
             fs.writeFileSync(path.join(subflowdir, 'package.json'), JSON.stringify(subflows.package, null, '    '))
 
             // output index.js
-            
+
             const index_js = fs.readFileSync(path.join(__dirname, '../template', 'index.js'), 'utf-8')
             fs.writeFileSync(path.join(subflowdir, 'index.js'), index_js)
 
@@ -168,4 +177,4 @@ commander
 const options = commander.opts();
 const gen = new GenerateLib()
 const resultData = gen.readflow(options.file)
-gen.generate(resultData,options.output)
+gen.generate(resultData, options.output)
